@@ -5,9 +5,9 @@ import { loadGreeting as mockLoadGreeting } from '../api'
 
 jest.mock('../api')
 
-
 test('loads greeting on click', async () => {
-  mockLoadGreeting.mockResolvedValueOnce({ data: { greeting: 'TEST_GREETING' }})
+  const testGreeting = 'TEST_GREETING'
+  mockLoadGreeting.mockResolvedValueOnce({ data: { greeting: testGreeting }})
   const { getByLabelText, getByText } = render(<GreetingLoader />)
   const nameInput = getByLabelText(/name/i)
   const loadButton = getByText(/load greeting/i)
@@ -17,5 +17,5 @@ test('loads greeting on click', async () => {
   expect(mockLoadGreeting).toBeCalledWith('mary')
   expect(mockLoadGreeting).toHaveBeenCalledTimes(1)
   await wait(() => 
-    expect(getByLabelText(/greeting/i)).toHaveTextContent('TEST_GREETING'))
+    expect(getByLabelText(/greeting/i)).toHaveTextContent(testGreeting))
 })
