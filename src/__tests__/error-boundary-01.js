@@ -1,53 +1,50 @@
 import React from 'react'
-import {render} from '@testing-library/react'
-import {reportError as mockReportError} from '../api'
-import {ErrorBoundary} from '../error-boundary'
+import { render } from '@testing-library/react'
+import { ErrorBoundary } from '../error-boundary'
+import { reportError as mockReportError } from '../api'
 
 jest.mock('../api')
+
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+afterAll(() => {
+  console.error.mockRestore()
+})
 
 afterEach(() => {
   jest.clearAllMocks()
 })
 
-function Bomb({shouldThrow}) {
-  if (shouldThrow) {
-    throw new Error('💣')
-  } else {
-    return null
+const Bomb = (props) => {
+  if (props.blow) {
+    throw new Error('blast')
   }
+
+  return 'fine'
 }
 
-test('calls reportError and renders that there was a problem', () => {
-  mockReportError.mockResolvedValueOnce({success: true})
-  const {rerender} = render(
+test('calls reportError and renders there was a problem', () => {
+  mockReportError.mockResolvedValueOnce({ success: true })
+  const { getByText, rerender } = render(
     <ErrorBoundary>
       <Bomb />
-    </ErrorBoundary>,
+    </ErrorBoundary>
   )
-
+  
+  expect(getByText(/fine/i)).toBeInTheDocument()
+  
   rerender(
     <ErrorBoundary>
-      <Bomb shouldThrow={true} />
-    </ErrorBoundary>,
+      <Bomb blow/>
+    </ErrorBoundary>
   )
-
   const error = expect.any(Error)
-  const info = {componentStack: expect.stringContaining('Bomb')}
-  expect(mockReportError).toHaveBeenCalledWith(error, info)
-  expect(mockReportError).toHaveBeenCalledTimes(1)
-})
+  const info = { componentStack: expect.stringContaining('Bomb')}
 
-// this is only here to make the error output not appear in the project's output
-// even though in the course we don't include this bit and leave it in it's incomplete state.
-beforeEach(() => {
-  jest.spyOn(console, 'error').mockImplementation(() => {})
-})
+  expect(mockReportError).toBeCalledWith(error, info)
+  expect(mockReportError).toBeCalledTimes(1)
+  expect(getByText(/there was a problem/i)).toBeInTheDocument()
 
-afterEach(() => {
-  console.error.mockRestore()
 })
-
-/*
-eslint
-  jest/prefer-hooks-on-top: off
-*/
