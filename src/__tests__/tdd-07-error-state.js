@@ -57,16 +57,19 @@ test('renders a form with title, content, tags, and a submit button', async () =
   await wait(() => expect(MockRedirect).toHaveBeenCalledWith({to: '/'}, {}))
 })
 
-test('renders an error message from the server', async () => {
-  const testError = 'test error'
-  mockSavePost.mockRejectedValueOnce({data: {error: testError}})
+test('renders an error from the server', async () => {
+  mockSavePost.mockRejectedValueOnce({ data: { error: 'test-error' } })
   const fakeUser = userBuilder()
-  const {getByText, findByRole} = render(<Editor user={fakeUser} />)
+  const { getByText, queryByRole, findByRole } = render(<Editor user={fakeUser} />)
+
   const submitButton = getByText(/submit/i)
+
+  expect(queryByRole('alert')).toBeNull()
 
   fireEvent.click(submitButton)
 
+  expect(submitButton).toBeDisabled()
   const postError = await findByRole('alert')
-  expect(postError).toHaveTextContent(testError)
+  expect(postError).toHaveTextContent('test-error')
   expect(submitButton).not.toBeDisabled()
 })
