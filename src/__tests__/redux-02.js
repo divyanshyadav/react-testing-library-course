@@ -1,28 +1,33 @@
 import React from 'react'
-import {createStore} from 'redux'
 import {Provider} from 'react-redux'
-import {render, fireEvent} from '@testing-library/react'
+import { createStore } from 'redux'
+import {render as rtlRender, fireEvent} from '@testing-library/react'
 import {Counter} from '../redux-counter'
-import {store as appStore} from '../redux-store'
-import {reducer} from '../redux-reducer'
+import { reducer } from '../redux-reducer'
+
+function render(ui, { 
+  initialState,
+  store = createStore(reducer, initialState),
+  ...rtlOptions
+} = {}) {
+  function Wrapper({ children }) {
+    return <Provider store={store}>{children}</Provider>
+  }
+  return rtlRender(ui, {
+    wrapper: Wrapper,
+    ...rtlOptions,
+  })
+}
 
 test('can render with redux with defaults', () => {
-  const {getByLabelText, getByText} = render(
-    <Provider store={appStore}>
-      <Counter />
-    </Provider>,
-  )
+  const {getByLabelText, getByText} = render(<Counter />)
   fireEvent.click(getByText('+'))
   expect(getByLabelText(/count/i)).toHaveTextContent('1')
 })
 
-test('can render with redux with custom initial state', () => {
-  const store = createStore(reducer, {count: 3})
-  const {getByLabelText, getByText} = render(
-    <Provider store={store}>
-      <Counter />
-    </Provider>,
-  )
-  fireEvent.click(getByText('-'))
-  expect(getByLabelText(/count/i)).toHaveTextContent('2')
+test('render with redux with custom initial state', () => {
+  const {getByLabelText, getByText} = render(<Counter />,
+    { initialState: { count: 3 } })
+  fireEvent.click(getByText('+'))
+  expect(getByLabelText(/count/i)).toHaveTextContent('4')
 })

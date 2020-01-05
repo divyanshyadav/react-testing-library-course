@@ -26,22 +26,34 @@ const userBuilder = build('User').fields({
   id: sequence(s => `user-${s}`),
 })
 
+function renderEditor() {
+  const fakeUser = userBuilder()
+  const utils = render(<Editor user={fakeUser} />)
+  const fakePost = postBuilder()
+  
+  utils.getByLabelText(/title/i).value = fakePost.title
+  utils.getByLabelText(/content/i).value = fakePost.content
+  utils.getByLabelText(/tags/i).value = fakePost.tags.join(', ')
+  const submitButton = utils.getByText(/submit/i)
+  
+  return {
+    ...utils,
+    submitButton,
+    fakePost,
+    fakeUser
+  }
+
+}
+
 test('renders a form with title, content, tags, and a submit button', async () => {
   mockSavePost.mockResolvedValueOnce()
-  const fakeUser = userBuilder()
-  const {getByLabelText, getByText} = render(<Editor user={fakeUser} />)
-  const fakePost = postBuilder()
+
+  const { submitButton, fakePost, fakeUser } = renderEditor()
   const preDate = new Date().getTime()
-
-  getByLabelText(/title/i).value = fakePost.title
-  getByLabelText(/content/i).value = fakePost.content
-  getByLabelText(/tags/i).value = fakePost.tags.join(', ')
-  const submitButton = getByText(/submit/i)
-
+ 
   fireEvent.click(submitButton)
 
   expect(submitButton).toBeDisabled()
-
   expect(mockSavePost).toHaveBeenCalledWith({
     ...fakePost,
     date: expect.any(String),
@@ -51,25 +63,22 @@ test('renders a form with title, content, tags, and a submit button', async () =
 
   const postDate = new Date().getTime()
   const date = new Date(mockSavePost.mock.calls[0][0].date).getTime()
+  
   expect(date).toBeGreaterThanOrEqual(preDate)
   expect(date).toBeLessThanOrEqual(postDate)
-
   await wait(() => expect(MockRedirect).toHaveBeenCalledWith({to: '/'}, {}))
 })
 
 test('renders an error from the server', async () => {
   mockSavePost.mockRejectedValueOnce({ data: { error: 'test-error' } })
-  const fakeUser = userBuilder()
-  const { getByText, queryByRole, findByRole } = render(<Editor user={fakeUser} />)
-
-  const submitButton = getByText(/submit/i)
-
+  const { queryByRole, findByRole, submitButton } = renderEditor()
+ 
   expect(queryByRole('alert')).toBeNull()
-
   fireEvent.click(submitButton)
-
   expect(submitButton).toBeDisabled()
+ 
   const postError = await findByRole('alert')
+ 
   expect(postError).toHaveTextContent('test-error')
   expect(submitButton).not.toBeDisabled()
 })
