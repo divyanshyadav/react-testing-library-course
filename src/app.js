@@ -47,6 +47,7 @@ function Page1({history}) {
         onSubmit={e => {
           e.preventDefault()
           history.push('/page-2')
+          
         }}
       >
         <label htmlFor="food">Favorite Food</label>

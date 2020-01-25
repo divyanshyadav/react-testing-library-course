@@ -15,7 +15,8 @@ function Modal({children}) {
   const el = React.useRef(document.createElement('div'))
   React.useLayoutEffect(() => {
     const currentEl = el.current
-    modalRoot.appendChild(currentEl)
+    modalRoot.appendChild(
+      currentEl)
     return () => modalRoot.removeChild(currentEl)
   }, [])
   return ReactDOM.createPortal(children, el.current)
